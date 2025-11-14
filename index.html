@@ -18,49 +18,50 @@
             border-radius: 12px;
             padding: 40px 20px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            max-width: 320px;
+            margin: auto;
         }
 
         h1 {
+            font-size: 32px;
+            margin-bottom: 20px;
             color: #1d7aff;
-            margin-bottom: 10px;
-            font-size: 40px;
         }
 
         button {
             background: #1d7aff;
             color: white;
             border: none;
-            padding: 15px 25px;
-            border-radius: 10px;
+            padding: 12px 20px;
+            border-radius: 8px;
             font-size: 18px;
-            margin-top: 20px;
             cursor: pointer;
+            width: 100%;
         }
 
-        p {
-            font-size: 18px;
+        button:hover {
+            opacity: 0.8;
         }
     </style>
 </head>
 
 <body>
 
-<div class="box">
-    <h1>Oi</h1>
-    <p>Добро пожаловать! 🚀</p>
-    <p>Ваше приложение уже работает внутри Telegram Mini App.</p>
+    <div class="box">
+        <h1>Oi 👋</h1>
+        <p>Поиск единомышленников по городам</p>
 
-    <button onclick="next()">Продолжить</button>
-</div>
+        <button onclick="next()">Продолжить</button>
+    </div>
 
-<script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
 
-    function next() {
-        tg.showAlert("Отлично! Дальше добавим полноценный функционал Oi 💙");
-    }
-</script>
+        function next() {
+            tg.showAlert("Отлично! Дальше добавим выбор города.");
+        }
+    </script>
 
 </body>
 </html>
