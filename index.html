@@ -381,5 +381,162 @@
     regResult.style.display = 'none';
   };
 })();
+</script><!-- ВСТАВЬТЕ ЭТО ПРЯМО В index.html перед </script> -->
+<script>
+// --- helper: показываем форму регистрации для выбранного города ---
+function oi_showRegistration(selectedCity) {
+  // если модаль уже есть, откроем и обновим город
+  let existing = document.getElementById('oi-registration-modal');
+  if (!existing) {
+    // создаём модаль
+    const modal = document.createElement('div');
+    modal.id = 'oi-registration-modal';
+    Object.assign(modal.style, {
+      position: 'fixed', left:0, top:0, right:0, bottom:0,
+      display:'flex', alignItems:'center', justifyContent:'center',
+      background:'rgba(0,0,0,0.3)', zIndex: 9999,
+      padding: '20px',
+    });
+
+    modal.innerHTML = `
+      <div style="width:100%;max-width:520px;background:#fff;border-radius:12px;padding:28px;box-shadow:0 8px 30px rgba(0,0,0,.12);font-family:Arial,Helvetica,sans-serif;">
+        <h2 style="margin:0 0 8px;font-size:28px;text-align:center">Регистрация</h2>
+        <p style="margin:0 0 16px;text-align:center;color:#6b7280">Вы выбрали город: <b id="oi-city-name"></b></p>
+
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <input id="oi-name" placeholder="Имя" style="flex:1;padding:12px;border-radius:8px;border:1px solid #e6e6e6;" />
+          <input id="oi-age" placeholder="Возраст" type="number" style="width:110px;padding:12px;border-radius:8px;border:1px solid #e6e6e6;" />
+        </div>
+
+        <div style="margin-bottom:10px;">
+          <label style="display:block;margin-bottom:6px;color:#374151">Увлечение (выберите одно или несколько)</label>
+
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:8px;">
+            <button class="oi-hobby-chip" data-hobby="Футбол" style="padding:10px;border-radius:10px;border:1px solid #e6e6e6;background:#fff;cursor:pointer">⚽ Футбол</button>
+            <button class="oi-hobby-chip" data-hobby="Плавание" style="padding:10px;border-radius:10px;border:1px solid #e6e6e6;background:#fff;cursor:pointer">🏊 Плавание</button>
+            <button class="oi-hobby-chip" data-hobby="Настольный теннис" style="padding:10px;border-radius:10px;border:1px solid #e6e6e6;background:#fff;cursor:pointer">🏓 Наст. теннис</button>
+            <button class="oi-hobby-chip" data-hobby="Баскетбол" style="padding:10px;border-radius:10px;border:1px solid #e6e6e6;background:#fff;cursor:pointer">🏀 Баскетбол</button>
+            <button class="oi-hobby-chip" data-hobby="Волейбол" style="padding:10px;border-radius:10px;border:1px solid #e6e6e6;background:#fff;cursor:pointer">🏐 Волейбол</button>
+            <button class="oi-hobby-chip" data-hobby="Музыка" style="padding:10px;border-radius:10px;border:1px solid #e6e6e6;background:#fff;cursor:pointer">🎵 Музыка</button>
+            <button class="oi-hobby-chip" data-hobby="Танцы" style="padding:10px;border-radius:10px;border:1px solid #e6e6e6;background:#fff;cursor:pointer">💃 Танцы</button>
+            <button class="oi-hobby-chip" data-hobby="Другое" style="padding:10px;border-radius:10px;border:1px solid #e6e6e6;background:#fff;cursor:pointer">✨ Другое</button>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
+          <button id="oi-send-bot" style="background:#1d7aff;color:#fff;padding:12px 18px;border-radius:10px;border:none;cursor:pointer">Отправить боту</button>
+          <button id="oi-save-local" style="background:#fff;color:#111;padding:12px 18px;border-radius:10px;border:1px solid #e6e6e6;cursor:pointer">Сохранить локально</button>
+          <button id="oi-close" style="background:transparent;color:#6b7280;padding:12px 10px;border-radius:10px;border:none;cursor:pointer">Закрыть</button>
+        </div>
+        <p id="oi-status" style="text-align:center;color:#6b7280;margin-top:12px;font-size:13px"></p>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    // привязки
+    document.getElementById('oi-close').onclick = () => modal.remove();
+    document.getElementById('oi-save-local').onclick = () => {
+      const data = collectOiForm();
+      localStorage.setItem('oi-reg-'+(data.city||'?'), JSON.stringify(data));
+      showOiStatus('Сохранено локально ✔️');
+    };
+    document.getElementById('oi-send-bot').onclick = () => {
+      const data = collectOiForm();
+      // если Telegram.WebApp доступен — отправляем в бот
+      if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.sendData === 'function') {
+        try {
+          window.Telegram.WebApp.sendData(JSON.stringify({type:'registration', payload:data}));
+          showOiStatus('Отправлено боту ✔️');
+        } catch (err) {
+          console.error(err);
+          showOiStatus('Ошибка отправки боту');
+        }
+      } else if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.onEvent === 'function') {
+        // fallback: если старый метод - используем sendData по имени
+        try {
+          window.Telegram.WebApp.sendData(JSON.stringify({type:'registration', payload:data}));
+          showOiStatus('Отправлено боту ✔️');
+        } catch(e){
+          console.log(e);
+          showOiStatus('Нельзя отправить: WebApp не доступен');
+        }
+      } else {
+        // не в телеге — просто логим или сохраняем
+        console.log('Registration payload:', data);
+        showOiStatus('WebApp не найден — данные в консоли');
+      }
+    };
+
+    // переключатель чипов
+    modal.querySelectorAll('.oi-hobby-chip').forEach(chip=>{
+      chip.onclick = () => {
+        chip.classList.toggle('oi-selected');
+        chip.style.background = chip.classList.contains('oi-selected') ? '#1d7aff' : '#fff';
+        chip.style.color = chip.classList.contains('oi-selected') ? '#fff' : '#111';
+      };
+    });
+
+    // collect + helpers
+    function collectOiForm(){
+      const name = document.getElementById('oi-name').value.trim();
+      const age = document.getElementById('oi-age').value;
+      const hobbies = Array.from(modal.querySelectorAll('.oi-hobby-chip.oi-selected')).map(n=>n.dataset.hobby);
+      const city = modal.querySelector('#oi-city-name').innerText;
+      return {city, name, age, hobbies, ts: new Date().toISOString()};
+    }
+    function showOiStatus(txt){
+      const s = modal.querySelector('#oi-status');
+      s.innerText = txt;
+      setTimeout(()=>{ s.innerText = ''; }, 3000);
+    }
+  } // end create modal
+
+  // обновляем выбранный город в модали и показываем
+  const modalNow = document.getElementById('oi-registration-modal');
+  if (modalNow) {
+    modalNow.querySelector('#oi-city-name').innerText = selectedCity || '—';
+    modalNow.style.display = 'flex';
+  }
+}
+
+// --- автоматическое привязывание к карточкам городов ---
+// Если в разметке у карточек стоит класс .city-card, код сам повесит обработчик.
+// Убедитесь, что в HTML у каждой карточки есть атрибут data-city, например:
+// <div class="city-card" data-city="Бишкек">Бишкек</div>
+function oi_bindCityClicks() {
+  const cards = document.querySelectorAll('.city-card');
+  if (cards.length === 0) {
+    // если разметка другая — можно поймать по тексту внутри карточек (backup)
+    const possible = Array.from(document.querySelectorAll('button,div')).filter(el=>{
+      const txt = (el.innerText||'').trim();
+      return ['Бишкек','Алматы','Астана','Москва','Ташкент'].includes(txt);
+    });
+    possible.forEach(el=>{
+      el.classList.add('city-card'); // пометим
+    });
+  }
+
+  document.querySelectorAll('.city-card').forEach(card=>{
+    // если data-city не задан — берем текст
+    const cityName = card.dataset.city || (card.innerText || '').trim();
+    // визуальный фокус при выборе
+    card.style.cursor = 'pointer';
+    card.addEventListener('click', () => {
+      // снять выделение у всех
+      document.querySelectorAll('.city-card').forEach(c=>c.style.boxShadow='none');
+      // выделить текущую
+      card.style.boxShadow = '0 0 0 4px rgba(29,122,255,0.12)';
+      // вызвать форму регистрации
+      oi_showRegistration(cityName);
+    });
+  });
+}
+
+// запускаем привязку после загрузки DOM
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', oi_bindCityClicks);
+} else {
+  oi_bindCityClicks();
+}
 </script>
 <!-- END: Простая регистрация -->
