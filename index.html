@@ -1,236 +1,417 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8" />
   <title>Oi — единодруг</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    /* Минималистичные стили — можно менять */
-    :root{--blue:#1d7aff;--bg:#f3f3f3;--card:#fff;--muted:#6b7280;}
-    body{font-family:Inter, Arial, sans-serif;background:var(--bg);margin:0;padding:40px;display:flex;align-items:flex-start;justify-content:center;min-height:100vh;}
-    .card{background:var(--card);width:720px;max-width:95%;border-radius:14px;padding:36px;box-shadow:0 8px 30px rgba(0,0,0,0.08);}
+    :root{
+      --bg:#f3f6f8;
+      --card:#fff;
+      --primary:#1d7aff;
+      --muted:#9aa4b2;
+      --radius:14px;
+      --gap:16px;
+      font-family: Inter, Arial, sans-serif;
+    }
+    body{
+      margin:0;
+      background:var(--bg);
+      display:flex;
+      justify-content:center;
+      padding:40px 16px;
+    }
+    .container{
+      width:100%;
+      max-width:760px;
+    }
+    .card{
+      background:var(--card);
+      border-radius:var(--radius);
+      padding:32px;
+      box-shadow:0 8px 30px rgba(15,23,42,0.06);
+    }
     h1{font-size:32px;margin:0 0 10px 0}
-    p.lead{color:var(--muted);margin:8px 0 20px 0}
-    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
-    .city{padding:18px;border-radius:12px;border:1px solid rgba(0,0,0,0.06);background:#fff;cursor:pointer;display:flex;align-items:center;gap:12px;font-weight:600}
-    .city.selected{outline:3px solid rgba(29,122,255,0.14);box-shadow:0 6px 20px rgba(29,122,255,0.06)}
-    .controls{display:flex;gap:12px;margin-top:20px}
-    .btn{padding:12px 18px;border-radius:8px;border:none;cursor:pointer}
-    .btn.primary{background:var(--blue);color:#fff;box-shadow:0 6px 18px rgba(29,122,255,0.18)}
-    .btn.ghost{background:#fff;border:1px solid rgba(0,0,0,0.08)}
-    /* registration form */
-    .reg{margin-top:30px}
-    .row{display:flex;gap:12px}
-    .input{width:100%;padding:12px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);background:#fff}
-    .cats{display:flex;gap:8px;margin:12px 0}
-    .cat-btn{padding:8px 12px;border-radius:999px;border:1px solid rgba(0,0,0,0.06);cursor:pointer;background:#fff}
-    .cat-btn.active{background:rgba(29,122,255,0.08);border-color:rgba(29,122,255,0.18)}
-    #hobbyList{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
-    .hobby-item{padding:12px 18px;border-radius:10px;background:#fff;border:1px solid rgba(0,0,0,0.06);cursor:pointer}
-    .hobby-item.selected{background:linear-gradient(90deg,#1d7aff,#6fb8ff);color:#fff;border:none;box-shadow:0 6px 14px rgba(29,122,255,0.12)}
-    .small{font-size:13px;color:var(--muted)}
-    footer{margin-top:18px;text-align:center;color:var(--muted);font-size:13px}
-    @media (max-width:520px){.grid{grid-template-columns:1fr}}
+    p.lead{color:var(--muted);margin:0 0 20px 0}
+
+    /* City grid */
+    .cities{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px}
+    .cityCard{
+      border-radius:12px;padding:18px;background:#fff;border:1px solid rgba(0,0,0,0.04);
+      display:flex;align-items:center;gap:12px;cursor:pointer;justify-content:center;font-weight:600;
+      box-shadow:0 6px 18px rgba(15,23,42,0.03);
+    }
+    .cityCard.selected{outline:3px solid rgba(29,122,255,0.15);box-shadow:0 10px 30px rgba(29,122,255,0.06);}
+
+    /* actions */
+    .actions{display:flex;gap:12px;margin-bottom:28px}
+    .btn{padding:12px 18px;border-radius:12px;border:none;cursor:pointer}
+    .btn.primary{background:var(--primary);color:#fff;box-shadow:0 8px 20px rgba(29,122,255,0.14)}
+    .btn.ghost{background:#fff;border:1px solid rgba(0,0,0,0.06)}
+
+    /* registration */
+    .reg{margin-top:10px}
+    .input{width:100%;padding:12px;border-radius:10px;border:1px solid #e4e8ef;margin-bottom:12px}
+    .categories{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+    .catBtn{padding:8px 12px;border-radius:20px;border:1px solid rgba(0,0,0,0.06);background:#fff;cursor:pointer}
+    .catBtn.active{background:rgba(29,122,255,0.08);border-color:rgba(29,122,255,0.18)}
+
+    /* hobby cards grid */
+    #hobbyCards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+    .hobbyCard{
+      background:#fff;border-radius:12px;padding:14px;text-align:center;cursor:pointer;
+      border:1px solid rgba(0,0,0,0.04);box-shadow:0 8px 20px rgba(15,23,42,0.03);
+      user-select:none;font-weight:600;
+    }
+    .hobbyCard.selected{background:linear-gradient(90deg,var(--primary),#63a7ff);color:#fff;border:none;box-shadow:0 14px 30px rgba(29,122,255,0.12)}
+
+    /* modal custom hobby */
+    #customHobbyModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:9999}
+    #customHobbyModal .modalBox{background:#fff;padding:18px;border-radius:12px;width:90%;max-width:380px;text-align:center}
+    .flexRow{display:flex;gap:8px;justify-content:center;align-items:center}
+
+    .small{font-size:13px;color:#7b8791}
+    .footer{margin-top:18px;display:flex;justify-content:space-between;gap:12px}
+
+    @media (max-width:480px){
+      #hobbyCards{grid-template-columns:repeat(2,1fr)}
+      .cities{grid-template-columns:repeat(1,1fr)}
+    }
   </style>
 </head>
 <body>
+  <div class="container">
+    <div class="card">
+      <h1>Выберите город</h1>
+      <p class="lead">Нажмите на карточку, чтобы выбрать. Можно искать.</p>
 
-  <div class="card" id="regWrapper">
-    <h1>Выберите город</h1>
-    <p class="lead">Нажмите на карточку, чтобы выбрать. Можно искать.</p>
+      <input id="citySearch" class="input" placeholder="Поиск города (например Бишкек)">
 
-    <input id="citySearch" class="input" placeholder="Поиск города (например Бишкек)" />
+      <div class="cities" id="cities">
+        <!-- города генерируются JS -->
+      </div>
 
-    <div style="height:18px"></div>
+      <div class="actions">
+        <button id="sendToBot" class="btn primary">Отправить боту</button>
+        <button id="saveLocal" class="btn ghost">Сохранить локально</button>
+      </div>
 
-    <div class="grid" id="cityGrid">
-      <!-- города заполняются JS -->
-    </div>
+      <hr style="border:none;height:1px;background:#f0f3f5;margin:18px 0">
 
-    <div class="controls">
-      <button id="sendBot" class="btn primary">Отправить боту</button>
-      <button id="saveLocal" class="btn ghost">Сохранить локально</button>
-    </div>
+      <div id="registration" class="reg">
+        <h2>Регистрация</h2>
+        <p class="small">Укажите имя, возраст и хобби</p>
 
-    <!-- регистрация -->
-    <div class="reg" id="stepForm" style="display:none;">
-      <h1 style="font-size:24px;margin-top:18px">Регистрация</h1>
-      <p class="small">Укажите имя, возраст и хобби</p>
+        <input id="inpName" class="input" placeholder="Ваше имя">
+        <input id="inpAge" class="input" placeholder="Возраст (например 28)" inputmode="numeric">
 
-      <div style="height:12px"></div>
-      <input id="inpName" class="input" placeholder="Ваше имя" />
-      <div style="height:10px"></div>
-      <input id="inpAge" class="input" placeholder="Возраст (например 28)" />
+        <div style="margin-top:8px">
+          <div class="small">Выберите категорию хобби</div>
+          <div class="categories" id="categories">
+            <!-- категории генерируются JS -->
+          </div>
+        </div>
 
-      <div style="height:12px"></div>
-      <div class="small">Выберите категорию хобби</div>
-      <div id="hobbyCategories" class="cats"></div>
+        <div id="hobbyCards" style="margin-top:6px">
+          <!-- хобби генерируются JS -->
+        </div>
 
-      <div id="hobbyList"></div>
+        <div style="display:flex;gap:12px;margin-top:18px">
+          <button id="backBtn" class="btn ghost">Назад</button>
+          <button id="submitReg" class="btn primary">Зарегистрироваться</button>
+        </div>
 
-      <div style="height:14px"></div>
-      <div style="display:flex;gap:8px">
-        <button id="backBtn" class="btn ghost">Назад</button>
-        <button id="submitRegBtn" class="btn primary">Зарегистрироваться</button>
+        <p id="regMsg" class="small" style="margin-top:12px;color:#2f8a2f;display:none"></p>
       </div>
     </div>
+  </div>
 
-    <footer id="regResult"></footer>
+  <!-- Modal for custom hobby -->
+  <div id="customHobbyModal">
+    <div class="modalBox">
+      <h3>Добавить своё хобби</h3>
+      <input id="customHobbyInput" class="input" placeholder="Например: Йога">
+      <div class="footer">
+        <button id="cancelCustomHobby" class="btn ghost">Отмена</button>
+        <button id="saveCustomHobby" class="btn primary">Добавить</button>
+      </div>
+    </div>
   </div>
 
 <script>
 (function(){
-  // ---------- данные городов ----------
+  /* ====== Data ====== */
   const CITIES = [
-    {id:'bishkek', title:'Бишкек', flag:'🇰🇬'},
-    {id:'almaty', title:'Алматы', flag:'🇰🇿'},
-    {id:'astana', title:'Астана', flag:'🇰🇿'},
-    {id:'moscow', title:'Москва', flag:'🇷🇺'},
-    {id:'tashkent', title:'Ташкент', flag:'🇺🇿'}
+    {id:'bishkek', title:'Бишкек'},
+    {id:'almaty', title:'Алматы'},
+    {id:'astana', title:'Астана'},
+    {id:'moscow', title:'Москва'},
+    {id:'tashkent', title:'Ташкент'}
   ];
 
-  // ---------- расширенный список хобби ----------
-  const HOBBIES = {
+  const HOBBY_CATEGORIES = {
     "Спорт": [
-      "Футбол","Плавание","Баскетбол","Настольный теннис","Волейбол",
-      "Бег","Бокс","Кроссфит","Велосипед"
+      {id:'football', title:'Футбол'},
+      {id:'swimming', title:'Плавание'},
+      {id:'tennis', title:'Настольный теннис'},
+      {id:'basketball', title:'Баскетбол'},
+      {id:'volleyball', title:'Волейбол'},
+      {id:'running', title:'Бег'},
+      {id:'boxing', title:'Бокс'},
+      {id:'crossfit', title:'Кроссфит'},
+      {id:'cycling', title:'Велосипед'}
     ],
     "Искусство": [
-      "Музыка","Танцы","Рисование","Фотография","Пение","Театр"
+      {id:'music', title:'Музыка'},
+      {id:'dance', title:'Танцы'},
+      {id:'painting', title:'Рисование'},
+      {id:'theatre', title:'Театр'}
     ],
     "Технологии": [
-      "Кодинг","AI/ChatGPT","Робототехника","3D-моделирование","Геймдев"
+      {id:'coding', title:'Кодинг'},
+      {id:'robotics', title:'Робототехника'},
+      {id:'gaming', title:'Геймдев'}
     ],
     "Общение": [
-      "Кофе-встречи","Путешествия","Настолки","Книги","Языковой клуб"
+      {id:'coffee', title:'Кофе/встречи'},
+      {id:'boardgames', title:'Настолки'},
+      {id:'travel', title:'Путешествия'}
     ]
   };
 
-  // элементы
-  const cityGrid = document.getElementById('cityGrid');
+  /* ====== Elements ====== */
+  const citiesWrap = document.getElementById('cities');
   const citySearch = document.getElementById('citySearch');
-  const sendBot = document.getElementById('sendBot');
+  const sendToBot = document.getElementById('sendToBot');
   const saveLocal = document.getElementById('saveLocal');
-  const stepForm = document.getElementById('stepForm');
+
+  const categoriesWrap = document.getElementById('categories');
+  const hobbyCardsWrap = document.getElementById('hobbyCards');
+
   const inpName = document.getElementById('inpName');
   const inpAge = document.getElementById('inpAge');
-  const hobbyCategories = document.getElementById('hobbyCategories');
-  const hobbyList = document.getElementById('hobbyList');
-  const backBtn = document.getElementById('backBtn');
-  const submitRegBtn = document.getElementById('submitRegBtn');
-  const regResult = document.getElementById('regResult');
+  const submitReg = document.getElementById('submitReg');
+  const regMsg = document.getElementById('regMsg');
 
+  const customModal = document.getElementById('customHobbyModal');
+  const customInput = document.getElementById('customHobbyInput');
+  const saveCustomHobby = document.getElementById('saveCustomHobby');
+  const cancelCustomHobby = document.getElementById('cancelCustomHobby');
+
+  /* ====== State ====== */
   let selectedCity = null;
   let selectedCategory = null;
-  let selectedHobbies = new Set();
 
-  // отрисовка городов
-  function renderCities(filter=''){
-    cityGrid.innerHTML = '';
-    const f = filter.trim().toLowerCase();
-    CITIES.filter(c=>c.title.toLowerCase().includes(f)).forEach(c=>{
-      const el = document.createElement('div');
-      el.className = 'city';
-      el.innerHTML = `<span style="font-size:20px">${c.flag}</span><span>${c.title}</span>`;
-      el.onclick = ()=>{
-        document.querySelectorAll('.city').forEach(x=>x.classList.remove('selected'));
-        el.classList.add('selected');
+  /* ====== Helpers ====== */
+  function clearChildren(el){ while(el.firstChild) el.removeChild(el.firstChild); }
+
+  /* ====== Render cities ====== */
+  function renderCities(list){
+    clearChildren(citiesWrap);
+    list.forEach(c=>{
+      const d = document.createElement('div');
+      d.className = 'cityCard';
+      d.dataset.id = c.id;
+      d.innerHTML = `<span style="font-size:18px;margin-right:8px">${flagEmoji(c.id)}</span>${c.title}`;
+      d.onclick = () => {
+        document.querySelectorAll('.cityCard').forEach(x=>x.classList.remove('selected'));
+        d.classList.add('selected');
         selectedCity = c;
       };
-      cityGrid.appendChild(el);
+      citiesWrap.appendChild(d);
     });
   }
-  citySearch.addEventListener('input',()=>renderCities(citySearch.value));
 
-  // отрисовать категории хобби
+  function flagEmoji(id){
+    if(id==='bishkek') return '🇰🇬';
+    if(id==='almaty' || id==='astana') return '🇰🇿';
+    if(id==='moscow') return '🇷🇺';
+    if(id==='tashkent') return '🇺🇿';
+    return '📍';
+  }
+
+  citySearch.addEventListener('input', ()=>{
+    const q = citySearch.value.trim().toLowerCase();
+    const filtered = CITIES.filter(ci => ci.title.toLowerCase().includes(q));
+    renderCities(filtered.length?filtered:CITIES);
+  });
+
+  renderCities(CITIES);
+
+  /* ====== Render categories and hobby cards ====== */
   function renderCategories(){
-    hobbyCategories.innerHTML = '';
-    Object.keys(HOBBIES).forEach(cat=>{
+    clearChildren(categoriesWrap);
+    Object.keys(HOBBY_CATEGORIES).forEach(cat=>{
       const b = document.createElement('button');
-      b.className = 'cat-btn';
+      b.className = 'catBtn';
       b.textContent = cat;
-      b.onclick = ()=>{
-        document.querySelectorAll('.cat-btn').forEach(x=>x.classList.remove('active'));
+      b.onclick = () => {
+        document.querySelectorAll('.catBtn').forEach(x=>x.classList.remove('active'));
         b.classList.add('active');
         selectedCategory = cat;
-        renderHobbyItems(cat);
+        renderHobbiesFor(cat);
       };
-      hobbyCategories.appendChild(b);
+      categoriesWrap.appendChild(b);
     });
+    // default select first
+    const first = categoriesWrap.querySelector('.catBtn');
+    if(first) { first.click(); }
   }
 
-  // список хобби по категории
-  function renderHobbyItems(cat){
-    hobbyList.innerHTML = '';
-    HOBBIES[cat].forEach(h=>{
-      const d = document.createElement('div');
-      d.className = 'hobby-item' + (selectedHobbies.has(h) ? ' selected' : '');
-      d.textContent = h;
-      d.onclick = ()=>{
-        if(selectedHobbies.has(h)) selectedHobbies.delete(h);
-        else selectedHobbies.add(h);
-        renderHobbyItems(cat);
-      };
-      hobbyList.appendChild(d);
+  function renderHobbiesFor(category){
+    clearChildren(hobbyCardsWrap);
+    const list = HOBBY_CATEGORIES[category] || [];
+    list.forEach(h=>{
+      const card = document.createElement('div');
+      card.className = 'hobbyCard';
+      card.dataset.id = h.id;
+      card.innerText = h.title;
+      card.onclick = () => card.classList.toggle('selected');
+      hobbyCardsWrap.appendChild(card);
     });
+
+    // Add "Add custom hobby" tile as last
+    const custom = document.createElement('div');
+    custom.className = 'hobbyCard';
+    custom.id = 'addCustomHobby';
+    custom.innerHTML = '➕ Другое';
+    custom.onclick = () => {
+      customInput.value = '';
+      customModal.style.display = 'flex';
+      customInput.focus();
+    };
+    hobbyCardsWrap.appendChild(custom);
   }
 
-  // переключаемся к форме регистрации (после выбора города)
-  sendBot.addEventListener('click', ()=>{
-    if(!selectedCity){ alert('Выберите город'); return; }
-    // показываем форму
-    stepForm.style.display = 'block';
-    // скрывать можно — но у нас делаем пока inline
-    renderCategories();
-  });
+  renderCategories();
 
-  saveLocal.addEventListener('click', ()=>{
-    if(!selectedCity){ alert('Выберите город'); return; }
-    localStorage.setItem('oi_city', JSON.stringify(selectedCity));
-    alert('Город сохранён локально: ' + selectedCity.title);
-  });
+  /* ====== Custom hobby modal handlers ====== */
+  cancelCustomHobby.onclick = () => customModal.style.display = 'none';
+  saveCustomHobby.onclick = () => {
+    const v = customInput.value.trim();
+    if(!v) return;
+    // create new hobby card and select it
+    const id = 'custom_' + v.toLowerCase().replace(/\s+/g,'_').replace(/[^\w\-]/g,'');
+    const card = document.createElement('div');
+    card.className = 'hobbyCard selected';
+    card.dataset.id = id;
+    card.innerText = v;
+    card.onclick = () => card.classList.toggle('selected');
+    // insert before the custom tile (which is last)
+    const customTile = document.getElementById('addCustomHobby');
+    hobbyCardsWrap.insertBefore(card, customTile);
+    customModal.style.display = 'none';
+  };
 
-  backBtn.addEventListener('click', ()=>{
-    stepForm.style.display = 'none';
-  });
-
-  submitRegBtn.addEventListener('click', ()=>{
+  /* ====== Save / Send handlers ====== */
+  function collectRegistration(){
     const name = inpName.value.trim();
     const age = inpAge.value.trim();
-    if(!name || !age){ alert('Введите имя и возраст'); return; }
-    if(selectedHobbies.size === 0){ if(!confirm('Вы не выбрали хобби. Продолжить?')) return; }
+    const city = selectedCity ? selectedCity.title : null;
+    const hobbies = Array.from(document.querySelectorAll('.hobbyCard.selected')).map(el=>el.innerText.trim());
+    return { name, age, city, hobbies };
+  }
 
-    const payload = {
-      city: selectedCity,
-      name, age,
-      hobbies: Array.from(selectedHobbies)
-    };
+  saveLocal.onclick = ()=>{
+    const data = collectRegistration();
+    localStorage.setItem('oi_reg', JSON.stringify(data));
+    regMsg.style.display='block';
+    regMsg.textContent = 'Сохранено локально ✅';
+    setTimeout(()=> regMsg.style.display='none', 3500);
+  };
 
-    // Сохраняем локально
-    localStorage.setItem('oi_user', JSON.stringify(payload));
-    regResult.innerText = 'Регистрация успешна — данные сохранены локально.';
-    regResult.style.color = '#0a7a0a';
+  submitReg.onclick = ()=>{
+    const data = collectRegistration();
+    if(!data.city){ alert('Выберите город'); return; }
+    if(!data.name){ alert('Введите имя'); return; }
+    if(!data.hobbies.length){ alert('Выберите хотя бы одно хобби'); return; }
 
-    // Попытка отправить в Telegram WebApp (если открыт внутри Telegram)
-    try {
-      if(window.Telegram && Telegram.WebApp){
-        const tg = Telegram.WebApp;
-        tg.expand();
-        // отправляем данные боту (можно заменить на нужный метод)
-        tg.sendData(JSON.stringify(payload));
+    // save locally
+    localStorage.setItem('oi_reg', JSON.stringify(data));
+
+    // try send to Telegram WebApp if available
+    try{
+      const tg = window.Telegram.WebApp;
+      if(tg){
+        tg.sendData(JSON.stringify({ type:'registration', payload:data }));
+        regMsg.style.display='block';
+        regMsg.style.color='#2f8a2f';
+        regMsg.textContent = 'Отправлено боту ✅';
+      } else {
+        regMsg.style.display='block';
+        regMsg.style.color='#2f8a2f';
+        regMsg.textContent = 'Локально сохранено (нет Telegram) ✅';
       }
-    } catch(e){
-      console.warn('tg send fail', e);
+    }catch(e){
+      regMsg.style.display='block';
+      regMsg.style.color='crimson';
+      regMsg.textContent = 'Ошибка при отправке: ' + e.message;
     }
-  });
+    setTimeout(()=> regMsg.style.display='none', 4000);
+  };
 
-  // Init
-  renderCities();
-  renderCategories();
+  sendToBot.onclick = ()=>{
+    const data = collectRegistration();
+    if(!data.city){
+      alert('Выберите город перед отправкой.');
+      return;
+    }
+    try{
+      const tg = window.Telegram.WebApp;
+      if(tg){
+        tg.sendData(JSON.stringify({ type:'city_selected', payload:{city: data.city}}));
+        alert('Данные города отправлены боту ✅');
+      } else {
+        alert('Telegram WebApp не обнаружен — открой мини-приложение в Telegram, чтобы отправить боту.');
+      }
+    }catch(e){
+      alert('Ошибка при отправке: ' + e.message);
+    }
+  };
+
+  /* ====== Init from localStorage if present ====== */
+  (function initFromLocal(){
+    const raw = localStorage.getItem('oi_reg');
+    if(!raw) return;
+    try{
+      const parsed = JSON.parse(raw);
+      if(parsed.city){
+        const cityEl = Array.from(document.querySelectorAll('.cityCard')).find(x=>x.innerText.includes(parsed.city));
+        if(cityEl) { cityEl.click(); }
+      }
+      if(parsed.name) inpName.value = parsed.name;
+      if(parsed.age) inpAge.value = parsed.age;
+
+      // select hobbies by titles (if match)
+      if(parsed.hobbies && parsed.hobbies.length){
+        parsed.hobbies.forEach(h => {
+          // try to find matching hobby card by text
+          const card = Array.from(document.querySelectorAll('.hobbyCard')).find(c => c.innerText.trim().toLowerCase() === h.trim().toLowerCase());
+          if(card) card.classList.add('selected');
+          else {
+            // create custom selected card
+            const id = 'custom_' + h.toLowerCase().replace(/\s+/g,'_').replace(/[^\w\-]/g,'');
+            const newCard = document.createElement('div');
+            newCard.className = 'hobbyCard selected';
+            newCard.dataset.id = id;
+            newCard.innerText = h;
+            newCard.onclick = () => newCard.classList.toggle('selected');
+            const customTile = document.getElementById('addCustomHobby');
+            if(customTile) hobbyCardsWrap.insertBefore(newCard, customTile);
+            else hobbyCardsWrap.appendChild(newCard);
+          }
+        });
+      }
+    }catch(e){ /* ignore parse errors */ }
+  })();
+
+  /* ====== Small UX nicety: close modal with ESC ====== */
+  window.addEventListener('keydown', (ev)=>{
+    if(ev.key === 'Escape') customModal.style.display = 'none';
+  });
 
 })();
 </script>
-
 </body>
 </html>
