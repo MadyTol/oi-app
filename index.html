@@ -232,24 +232,77 @@
 
 <script>
 (function(){
-  const HOBBY_CATEGORIES = {
+
+// Большой расширенный список хобби
+const HOBBIES = {
     "Спорт": [
-      { id: 'football', title: 'Футбол' },
-      { id: 'swimming', title: 'Плавание' },
-      { id: 'tennis', title: 'Настольный теннис' },
-      { id: 'basketball', title: 'Баскетбол' },
-      { id: 'volleyball', title: 'Волейбол' }
+        "Футбол","Плавание","Баскетбол","Настольный теннис","Волейбол",
+        "Бег","Бокс","ММА","Тхэквондо","Кроссфит","Велосипед"
     ],
     "Искусство": [
-      { id: 'music', title: 'Музыка' },
-      { id: 'dance', title: 'Танцы' },
-      { id: 'painting', title: 'Рисование' }
+        "Музыка","Танцы","Рисование","Фотография","Видеосъёмка",
+        "Пение","Граффити","Актерское мастерство"
     ],
-    "Другое": [
-      { id: 'coding', title: 'Кодинг' },
-      { id: 'coffee', title: 'Кофе/встречи' }
+    "Технологии": [
+        "Кодинг","AI/ChatGPT","Робототехника","3D-моделирование","Игры/геймдев"
+    ],
+    "Общение и отдых": [
+        "Кофе-встречи","Путешествия","Настолки","Книги","Языковые клубы"
     ]
-  };
+};
+
+const categoryContainer = document.getElementById("hobbyCategories");
+const hobbyContainer = document.getElementById("hobbyList");
+
+let selectedCategory = null;
+let selectedHobbies = new Set();
+
+// Отрисовать категории
+function renderCategories() {
+    categoryContainer.innerHTML = "";
+    Object.keys(HOBBIES).forEach(cat => {
+        const btn = document.createElement("button");
+        btn.className = "cat-btn";
+        btn.textContent = cat;
+        btn.onclick = () => {
+            selectedCategory = cat;
+            document.querySelectorAll('.cat-btn')
+                .forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            renderHobbies(cat);
+        };
+        categoryContainer.appendChild(btn);
+    });
+}
+
+// Отрисовать хобби
+function renderHobbies(cat) {
+    hobbyContainer.innerHTML = "";
+    HOBBIES[cat].forEach(hobby => {
+        const div = document.createElement("div");
+        div.className = "hobby-item";
+        div.textContent = hobby;
+
+        if (selectedHobbies.has(hobby))
+            div.classList.add("selected");
+
+        div.onclick = () => {
+            if (selectedHobbies.has(hobby))
+                selectedHobbies.delete(hobby);
+            else
+                selectedHobbies.add(hobby);
+
+            renderHobbies(cat);
+        };
+
+        hobbyContainer.appendChild(div);
+    });
+}
+
+renderCategories();
+
+})();
+</script>
 
   const wrapper = document.getElementById('regWrapper');
   const selectedCityText = document.getElementById('selectedCityText');
