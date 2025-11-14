@@ -1,67 +1,195 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Oi — единодруг</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Oi — единодруг</title>
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f3f3f3;
-            text-align: center;
-            padding: 40px;
-        }
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-        .box {
-            background: white;
-            border-radius: 12px;
-            padding: 40px 20px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            max-width: 320px;
-            margin: auto;
-        }
-
-        h1 {
-            font-size: 32px;
-            margin-bottom: 20px;
-            color: #1d7aff;
-        }
-
-        button {
-            background: #1d7aff;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 18px;
-            cursor: pointer;
-            width: 100%;
-        }
-
-        button:hover {
-            opacity: 0.8;
-        }
-    </style>
+  <style>
+    :root{
+      --bg:#f3f4f6;
+      --card:#ffffff;
+      --accent:#1d7aff;
+      --muted:#667085;
+      --radius:14px;
+      --gap:18px;
+    }
+    html,body{height:100%;margin:0;background:var(--bg);font-family:Inter,Arial,sans-serif;color:#0f1724}
+    .wrap{max-width:900px;margin:36px auto;padding:20px}
+    .card{background:var(--card);border-radius:var(--radius);box-shadow:0 10px 30px rgba(12,14,20,0.06);padding:28px; text-align:center}
+    h1{margin:0 0 8px;font-size:26px;color:#0b1220}
+    p.lead{margin:0 0 18px;color:var(--muted)}
+    .btn{display:inline-block;background:var(--accent);color:#fff;padding:12px 18px;border-radius:9px;border:none;cursor:pointer;font-weight:600;box-shadow:0 6px 16px rgba(29,122,255,0.18)}
+    .btn.ghost{background:transparent;color:var(--accent);box-shadow:none;border:1px solid rgba(29,122,255,0.12)}
+    .controls{display:flex;gap:12px;align-items:center;justify-content:center;margin:18px 0 22px;flex-wrap:wrap}
+    .search{flex:1;min-width:220px}
+    input.search{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #e6e9ef;background:#fff;box-sizing:border-box}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:var(--gap);margin-top:6px}
+    .city{background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,1));padding:14px;border-radius:12px;border:1px solid rgba(12,14,20,0.03);cursor:pointer;display:flex;align-items:center;gap:12px;transition:transform .14s ease, box-shadow .14s ease}
+    .city:hover{transform:translateY(-6px);box-shadow:0 14px 30px rgba(12,14,20,0.06)}
+    .city .flag{font-size:28px}
+    .city .name{font-weight:600}
+    .city.selected{outline:3px solid rgba(29,122,255,0.12);box-shadow:0 16px 40px rgba(29,122,255,0.06)}
+    .footer{display:flex;gap:12px;align-items:center;justify-content:center;margin-top:22px;flex-wrap:wrap}
+    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:34px;background:#0b1220;color:#fff;padding:10px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s}
+    .toast.show{opacity:1;pointer-events:auto}
+    .small{font-size:13px;color:var(--muted)}
+    @media (max-width:420px){
+      .wrap{margin:18px;padding:14px}
+      .card{padding:18px}
+      .grid{gap:12px}
+    }
+  </style>
 </head>
-
 <body>
-
-    <div class="box">
-        <h1>Oi 👋</h1>
-        <p>Поиск единомышленников по городам</p>
-
-        <button onclick="next()">Продолжить</button>
+  <div class="wrap">
+    <div class="card" id="start-card">
+      <h1>Oi <span style="font-size:18px">👋</span></h1>
+      <p class="lead">Поиск единомышленников по городам</p>
+      <div style="margin-top:14px">
+        <button class="btn" id="open-btn">Продолжить</button>
+      </div>
     </div>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+    <div class="card" id="select-card" style="display:none; margin-top:18px">
+      <h1>Выберите город</h1>
+      <p class="small">Нажмите на карточку, чтобы выбрать. Можно искать.</p>
 
-        function next() {
-            tg.showAlert("Отлично! Дальше добавим выбор города.");
+      <div class="controls" style="margin-top:14px">
+        <div class="search">
+          <input id="search" class="search" placeholder="Поиск города (например Бишкек)" />
+        </div>
+        <div>
+          <button id="clear" class="btn ghost">Сброс</button>
+        </div>
+      </div>
+
+      <div class="grid" id="grid"></div>
+
+      <div class="footer">
+        <button id="sendBtn" class="btn">Отправить боту</button>
+        <button id="saveBtn" class="btn ghost">Сохранить локально</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    // Телеграм WebApp
+    const tg = window.Telegram?.WebApp || null;
+    try{ tg && tg.expand && tg.expand(); }catch(e){}
+
+    // Города (флаг - emoji)
+    const CITIES = [
+      { id: 'bishkek', name: 'Бишкек', flag: '🇰🇬' },
+      { id: 'almaty', name: 'Алматы', flag: '🇰🇿' },
+      { id: 'astana', name: 'Астана', flag: '🇰🇿' },
+      { id: 'moscow', name: 'Москва', flag: '🇷🇺' },
+      { id: 'tashkent', name: 'Ташкент', flag: '🇺🇿' }
+    ];
+
+    const grid = document.getElementById('grid');
+    const search = document.getElementById('search');
+    const openBtn = document.getElementById('open-btn');
+    const startCard = document.getElementById('start-card');
+    const selectCard = document.getElementById('select-card');
+    const toast = document.getElementById('toast');
+    const sendBtn = document.getElementById('sendBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const clearBtn = document.getElementById('clear');
+
+    let selected = localStorage.getItem('oi_city') || null;
+
+    function showToast(msg, timeout=2200){
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(()=>toast.classList.remove('show'), timeout);
+    }
+
+    function renderCities(filter = ''){
+      grid.innerHTML = '';
+      const q = filter.trim().toLowerCase();
+      const visible = CITIES.filter(c => c.name.toLowerCase().includes(q) || c.id.includes(q));
+      visible.forEach(city => {
+        const node = document.createElement('div');
+        node.className = 'city' + (selected === city.id ? ' selected' : '');
+        node.dataset.id = city.id;
+        node.innerHTML = `<div class="flag">${city.flag}</div><div class="name">${city.name}</div>`;
+        node.addEventListener('click', () => {
+          selectCity(city.id);
+        });
+        grid.appendChild(node);
+      });
+      if(visible.length === 0){
+        grid.innerHTML = '<div class="small" style="padding:12px;text-align:center;color:var(--muted)">Ничего не найдено</div>';
+      }
+    }
+
+    function selectCity(id){
+      selected = id;
+      localStorage.setItem('oi_city', id);
+      renderCities(search.value);
+      const cityObj = CITIES.find(c=>c.id===id);
+      showToast('Вы выбрали: ' + (cityObj?cityObj.name:id));
+    }
+
+    function sendToBot(){
+      if(!selected){
+        showToast('Сначала выберите город');
+        return;
+      }
+      const cityObj = CITIES.find(c=>c.id===selected);
+      const payload = JSON.stringify({ action: 'city_selected', city: selected, name: cityObj?.name || selected });
+      if(tg && tg.sendData){
+        try {
+          tg.sendData(payload);
+          showToast('Город отправлен боту: ' + (cityObj?.name || selected));
+        } catch(e){
+          console.error(e);
+          showToast('Ошибка при отправке боту');
         }
-    </script>
+      } else {
+        // fallback: просто показать
+        showToast('Данные готовы (локально): ' + (cityObj?.name || selected));
+        console.log('Payload to bot:', payload);
+      }
+    }
 
+    // UI handlers
+    openBtn.addEventListener('click', ()=>{
+      startCard.style.display = 'none';
+      selectCard.style.display = 'block';
+      renderCities();
+      if(tg && tg.MainButton) tg.MainButton.hide && tg.MainButton.hide();
+    });
+
+    search.addEventListener('input', (e)=> renderCities(e.target.value));
+    sendBtn.addEventListener('click', sendToBot);
+    saveBtn.addEventListener('click', ()=>{
+      if(!selected) return showToast('Выберите город прежде чем сохранить');
+      showToast('Сохранено в браузере');
+    });
+    clearBtn.addEventListener('click', ()=>{
+      search.value = '';
+      renderCities('');
+    });
+
+    // Инициализация
+    renderCities();
+
+    // Если уже был выбор — сразу открыть
+    if(selected){
+      // показываем карточки и подсвечиваем
+      startCard.style.display = 'none';
+      selectCard.style.display = 'block';
+      renderCities();
+    }
+
+    // Accessibility: Enter on search triggers filter (already handled)
+    // End of script
+  </script>
 </body>
 </html>
