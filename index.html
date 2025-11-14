@@ -193,3 +193,193 @@
   </script>
 </body>
 </html>
+<!-- BEGIN: Простая регистрация -->
+<div id="regWrapper" style="display:none; padding:40px; text-align:center; max-width:720px; margin:20px auto;">
+  <div id="stepCity" style="display:block;">
+    <h2 style="font-size:28px; margin-bottom:8px;">Регистрация</h2>
+    <p style="color:#666; margin-bottom:18px;">Выбран город: <strong id="selectedCityText"></strong></p>
+    <button id="startRegBtn" style="background:#1d7aff;color:#fff;border:none;padding:10px 18px;border-radius:10px;cursor:pointer;">Продолжить</button>
+  </div>
+
+  <div id="stepForm" style="display:none; text-align:left; margin-top:20px;">
+    <label style="display:block; margin-bottom:8px;">Имя
+      <input id="inpName" type="text" placeholder="Ваше имя" style="width:100%; padding:10px; margin-top:6px; border-radius:8px; border:1px solid #e3e7ee;">
+    </label>
+
+    <label style="display:block; margin-top:12px;">Возраст
+      <input id="inpAge" type="number" min="8" max="120" placeholder="Напр. 28" style="width:150px; padding:10px; margin-top:6px; border-radius:8px; border:1px solid #e3e7ee;">
+    </label>
+
+    <div style="margin-top:18px;">
+      <div style="font-weight:600; margin-bottom:8px;">Выберите хобби (можно несколько)</div>
+
+      <div id="categories" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;"></div>
+
+      <div id="hobbyCards" style="display:flex;flex-wrap:wrap;gap:10px;"></div>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:18px; justify-content:flex-end;">
+      <button id="backBtn" style="background:#fff;color:#1d7aff;border:1px solid #1d7aff;padding:10px 14px;border-radius:10px;cursor:pointer;">Назад</button>
+      <button id="submitRegBtn" style="background:#1d7aff;color:#fff;border:none;padding:10px 14px;border-radius:10px;cursor:pointer;">Зарегистрироваться</button>
+    </div>
+  </div>
+
+  <div id="regResult" style="display:none; margin-top:18px;">
+    <p id="regMsg" style="color:#333;"></p>
+    <button id="closeRegBtn" style="background:#fff;color:#1d7aff;border:1px solid #1d7aff;padding:8px 12px;border-radius:8px;cursor:pointer;">Закрыть</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const HOBBY_CATEGORIES = {
+    "Спорт": [
+      { id: 'football', title: 'Футбол' },
+      { id: 'swimming', title: 'Плавание' },
+      { id: 'tennis', title: 'Настольный теннис' },
+      { id: 'basketball', title: 'Баскетбол' },
+      { id: 'volleyball', title: 'Волейбол' }
+    ],
+    "Искусство": [
+      { id: 'music', title: 'Музыка' },
+      { id: 'dance', title: 'Танцы' },
+      { id: 'painting', title: 'Рисование' }
+    ],
+    "Другое": [
+      { id: 'coding', title: 'Кодинг' },
+      { id: 'coffee', title: 'Кофе/встречи' }
+    ]
+  };
+
+  const wrapper = document.getElementById('regWrapper');
+  const selectedCityText = document.getElementById('selectedCityText');
+  const startRegBtn = document.getElementById('startRegBtn');
+  const stepCity = document.getElementById('stepCity');
+  const stepForm = document.getElementById('stepForm');
+  const hobbyCards = document.getElementById('hobbyCards');
+  const categories = document.getElementById('categories');
+  const inpName = document.getElementById('inpName');
+  const inpAge = document.getElementById('inpAge');
+  const submitRegBtn = document.getElementById('submitRegBtn');
+  const backBtn = document.getElementById('backBtn');
+  const regResult = document.getElementById('regResult');
+  const regMsg = document.getElementById('regMsg');
+  const closeRegBtn = document.getElementById('closeRegBtn');
+
+  function getSelectedCity() {
+    return window.selectedCity || localStorage.getItem('oi_city') || null;
+  }
+
+  function showWrapperIfCity() {
+    const city = getSelectedCity();
+    if (!city) return;
+    wrapper.style.display = 'block';
+    selectedCityText.innerText = city;
+  }
+
+  function renderCategories() {
+    categories.innerHTML = '';
+    Object.keys(HOBBY_CATEGORIES).forEach((cat, idx) => {
+      const btn = document.createElement('button');
+      btn.innerText = cat;
+      btn.style = 'padding:8px 12px;border-radius:8px;border:1px solid #e6eefb;background:#fff;cursor:pointer;';
+      btn.dataset.cat = cat;
+      btn.onclick = () => {
+        Array.from(categories.children).forEach(c=>c.style.borderColor='#e6eefb');
+        btn.style.borderColor = '#1d7aff';
+        renderHobbies(cat);
+      };
+      categories.appendChild(btn);
+      if (idx === 0) btn.click();
+    });
+  }
+
+  function renderHobbies(category) {
+    hobbyCards.innerHTML = '';
+    (HOBBY_CATEGORIES[category]||[]).forEach(h => {
+      const card = document.createElement('div');
+      card.className = 'hobbyCard';
+      card.dataset.id = h.id;
+      card.style = 'border:1px solid #ecf0f6;padding:10px 14px;border-radius:10px;cursor:pointer;min-width:140px;text-align:center;background:#fff';
+      card.innerText = h.title;
+      card.onclick = () => {
+        card.classList.toggle('sel');
+        if (card.classList.contains('sel')) {
+          card.style.background = '#eaf3ff';
+          card.style.borderColor = '#1d7aff';
+        } else {
+          card.style.background = '#fff';
+          card.style.borderColor = '#ecf0f6';
+        }
+      };
+      hobbyCards.appendChild(card);
+    });
+  }
+
+  function getSelectedHobbies() {
+    return Array.from(hobbyCards.querySelectorAll('.sel')).map(el => el.dataset.id);
+  }
+
+  startRegBtn.onclick = () => {
+    stepCity.style.display = 'none';
+    stepForm.style.display = 'block';
+  };
+
+  backBtn.onclick = () => {
+    stepCity.style.display = 'block';
+    stepForm.style.display = 'none';
+  };
+
+  submitRegBtn.onclick = () => {
+    const name = inpName.value.trim();
+    const age = parseInt(inpAge.value,10);
+    const city = getSelectedCity();
+    const hobbies = getSelectedHobbies();
+
+    if (!name) return alert('Введите имя');
+    if (!age || age < 8) return alert('Введите корректный возраст');
+    if (!hobbies.length) return alert('Выберите хотя бы одно хобби');
+
+    const payload = {
+      action: 'save_profile',
+      city, 
+      name,
+      age,
+      hobbies,
+      ts: Date.now()
+    };
+
+    if (window.Telegram && Telegram.WebApp && Telegram.WebApp.sendData) {
+      Telegram.WebApp.sendData(JSON.stringify(payload));
+      regMsg.innerText = 'Готово — данные отправлены боту.';
+    } else {
+      localStorage.setItem('oi_profile', JSON.stringify(payload));
+      regMsg.innerText = 'WebApp недоступен — данные сохранены локально.';
+    }
+
+    stepForm.style.display = 'none';
+    regResult.style.display = 'block';
+  };
+
+  closeRegBtn.onclick = () => {
+    wrapper.style.display = 'none';
+    regResult.style.display = 'none';
+  };
+
+  renderCategories();
+  showWrapperIfCity();
+
+  window.oi_showRegistration = function(cityName) {
+    if (cityName) {
+      window.selectedCity = cityName;
+      localStorage.setItem('oi_city', cityName);
+    }
+    selectedCityText.innerText = getSelectedCity();
+    wrapper.style.display = 'block';
+    stepCity.style.display = 'block';
+    stepForm.style.display = 'none';
+    regResult.style.display = 'none';
+  };
+})();
+</script>
+<!-- END: Простая регистрация -->
