@@ -4,592 +4,233 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Oi — единодруг</title>
-
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
   <style>
-    :root{
-      --bg:#f3f4f6;
-      --card:#ffffff;
-      --accent:#1d7aff;
-      --muted:#667085;
-      --radius:14px;
-      --gap:18px;
-    }
-    html,body{height:100%;margin:0;background:var(--bg);font-family:Inter,Arial,sans-serif;color:#0f1724}
-    .wrap{max-width:900px;margin:36px auto;padding:20px}
-    .card{background:var(--card);border-radius:var(--radius);box-shadow:0 10px 30px rgba(12,14,20,0.06);padding:28px; text-align:center}
-    h1{margin:0 0 8px;font-size:26px;color:#0b1220}
-    p.lead{margin:0 0 18px;color:var(--muted)}
-    .btn{display:inline-block;background:var(--accent);color:#fff;padding:12px 18px;border-radius:9px;border:none;cursor:pointer;font-weight:600;box-shadow:0 6px 16px rgba(29,122,255,0.18)}
-    .btn.ghost{background:transparent;color:var(--accent);box-shadow:none;border:1px solid rgba(29,122,255,0.12)}
-    .controls{display:flex;gap:12px;align-items:center;justify-content:center;margin:18px 0 22px;flex-wrap:wrap}
-    .search{flex:1;min-width:220px}
-    input.search{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #e6e9ef;background:#fff;box-sizing:border-box}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:var(--gap);margin-top:6px}
-    .city{background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,1));padding:14px;border-radius:12px;border:1px solid rgba(12,14,20,0.03);cursor:pointer;display:flex;align-items:center;gap:12px;transition:transform .14s ease, box-shadow .14s ease}
-    .city:hover{transform:translateY(-6px);box-shadow:0 14px 30px rgba(12,14,20,0.06)}
-    .city .flag{font-size:28px}
-    .city .name{font-weight:600}
-    .city.selected{outline:3px solid rgba(29,122,255,0.12);box-shadow:0 16px 40px rgba(29,122,255,0.06)}
-    .footer{display:flex;gap:12px;align-items:center;justify-content:center;margin-top:22px;flex-wrap:wrap}
-    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:34px;background:#0b1220;color:#fff;padding:10px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s}
-    .toast.show{opacity:1;pointer-events:auto}
+    /* Минималистичные стили — можно менять */
+    :root{--blue:#1d7aff;--bg:#f3f3f3;--card:#fff;--muted:#6b7280;}
+    body{font-family:Inter, Arial, sans-serif;background:var(--bg);margin:0;padding:40px;display:flex;align-items:flex-start;justify-content:center;min-height:100vh;}
+    .card{background:var(--card);width:720px;max-width:95%;border-radius:14px;padding:36px;box-shadow:0 8px 30px rgba(0,0,0,0.08);}
+    h1{font-size:32px;margin:0 0 10px 0}
+    p.lead{color:var(--muted);margin:8px 0 20px 0}
+    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+    .city{padding:18px;border-radius:12px;border:1px solid rgba(0,0,0,0.06);background:#fff;cursor:pointer;display:flex;align-items:center;gap:12px;font-weight:600}
+    .city.selected{outline:3px solid rgba(29,122,255,0.14);box-shadow:0 6px 20px rgba(29,122,255,0.06)}
+    .controls{display:flex;gap:12px;margin-top:20px}
+    .btn{padding:12px 18px;border-radius:8px;border:none;cursor:pointer}
+    .btn.primary{background:var(--blue);color:#fff;box-shadow:0 6px 18px rgba(29,122,255,0.18)}
+    .btn.ghost{background:#fff;border:1px solid rgba(0,0,0,0.08)}
+    /* registration form */
+    .reg{margin-top:30px}
+    .row{display:flex;gap:12px}
+    .input{width:100%;padding:12px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);background:#fff}
+    .cats{display:flex;gap:8px;margin:12px 0}
+    .cat-btn{padding:8px 12px;border-radius:999px;border:1px solid rgba(0,0,0,0.06);cursor:pointer;background:#fff}
+    .cat-btn.active{background:rgba(29,122,255,0.08);border-color:rgba(29,122,255,0.18)}
+    #hobbyList{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+    .hobby-item{padding:12px 18px;border-radius:10px;background:#fff;border:1px solid rgba(0,0,0,0.06);cursor:pointer}
+    .hobby-item.selected{background:linear-gradient(90deg,#1d7aff,#6fb8ff);color:#fff;border:none;box-shadow:0 6px 14px rgba(29,122,255,0.12)}
     .small{font-size:13px;color:var(--muted)}
-    @media (max-width:420px){
-      .wrap{margin:18px;padding:14px}
-      .card{padding:18px}
-      .grid{gap:12px}
-    }
+    footer{margin-top:18px;text-align:center;color:var(--muted);font-size:13px}
+    @media (max-width:520px){.grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card" id="start-card">
-      <h1>Oi <span style="font-size:18px">👋</span></h1>
-      <p class="lead">Поиск единомышленников по городам</p>
-      <div style="margin-top:14px">
-        <button class="btn" id="open-btn">Продолжить</button>
+
+  <div class="card" id="regWrapper">
+    <h1>Выберите город</h1>
+    <p class="lead">Нажмите на карточку, чтобы выбрать. Можно искать.</p>
+
+    <input id="citySearch" class="input" placeholder="Поиск города (например Бишкек)" />
+
+    <div style="height:18px"></div>
+
+    <div class="grid" id="cityGrid">
+      <!-- города заполняются JS -->
+    </div>
+
+    <div class="controls">
+      <button id="sendBot" class="btn primary">Отправить боту</button>
+      <button id="saveLocal" class="btn ghost">Сохранить локально</button>
+    </div>
+
+    <!-- регистрация -->
+    <div class="reg" id="stepForm" style="display:none;">
+      <h1 style="font-size:24px;margin-top:18px">Регистрация</h1>
+      <p class="small">Укажите имя, возраст и хобби</p>
+
+      <div style="height:12px"></div>
+      <input id="inpName" class="input" placeholder="Ваше имя" />
+      <div style="height:10px"></div>
+      <input id="inpAge" class="input" placeholder="Возраст (например 28)" />
+
+      <div style="height:12px"></div>
+      <div class="small">Выберите категорию хобби</div>
+      <div id="hobbyCategories" class="cats"></div>
+
+      <div id="hobbyList"></div>
+
+      <div style="height:14px"></div>
+      <div style="display:flex;gap:8px">
+        <button id="backBtn" class="btn ghost">Назад</button>
+        <button id="submitRegBtn" class="btn primary">Зарегистрироваться</button>
       </div>
     </div>
 
-    <div class="card" id="select-card" style="display:none; margin-top:18px">
-      <h1>Выберите город</h1>
-      <p class="small">Нажмите на карточку, чтобы выбрать. Можно искать.</p>
-
-      <div class="controls" style="margin-top:14px">
-        <div class="search">
-          <input id="search" class="search" placeholder="Поиск города (например Бишкек)" />
-        </div>
-        <div>
-          <button id="clear" class="btn ghost">Сброс</button>
-        </div>
-      </div>
-
-      <div class="grid" id="grid"></div>
-
-      <div class="footer">
-        <button id="sendBtn" class="btn">Отправить боту</button>
-        <button id="saveBtn" class="btn ghost">Сохранить локально</button>
-      </div>
-    </div>
+    <footer id="regResult"></footer>
   </div>
-
-  <div id="toast" class="toast"></div>
-
-  <script>
-    // Телеграм WebApp
-    const tg = window.Telegram?.WebApp || null;
-    try{ tg && tg.expand && tg.expand(); }catch(e){}
-
-    // Города (флаг - emoji)
-    const CITIES = [
-      { id: 'bishkek', name: 'Бишкек', flag: '🇰🇬' },
-      { id: 'almaty', name: 'Алматы', flag: '🇰🇿' },
-      { id: 'astana', name: 'Астана', flag: '🇰🇿' },
-      { id: 'moscow', name: 'Москва', flag: '🇷🇺' },
-      { id: 'tashkent', name: 'Ташкент', flag: '🇺🇿' }
-    ];
-
-    const grid = document.getElementById('grid');
-    const search = document.getElementById('search');
-    const openBtn = document.getElementById('open-btn');
-    const startCard = document.getElementById('start-card');
-    const selectCard = document.getElementById('select-card');
-    const toast = document.getElementById('toast');
-    const sendBtn = document.getElementById('sendBtn');
-    const saveBtn = document.getElementById('saveBtn');
-    const clearBtn = document.getElementById('clear');
-
-    let selected = localStorage.getItem('oi_city') || null;
-
-    function showToast(msg, timeout=2200){
-      toast.textContent = msg;
-      toast.classList.add('show');
-      setTimeout(()=>toast.classList.remove('show'), timeout);
-    }
-
-    function renderCities(filter = ''){
-      grid.innerHTML = '';
-      const q = filter.trim().toLowerCase();
-      const visible = CITIES.filter(c => c.name.toLowerCase().includes(q) || c.id.includes(q));
-      visible.forEach(city => {
-        const node = document.createElement('div');
-        node.className = 'city' + (selected === city.id ? ' selected' : '');
-        node.dataset.id = city.id;
-        node.innerHTML = `<div class="flag">${city.flag}</div><div class="name">${city.name}</div>`;
-        node.addEventListener('click', () => {
-          selectCity(city.id);
-        });
-        grid.appendChild(node);
-      });
-      if(visible.length === 0){
-        grid.innerHTML = '<div class="small" style="padding:12px;text-align:center;color:var(--muted)">Ничего не найдено</div>';
-      }
-    }
-
-    function selectCity(id){
-      selected = id;
-      localStorage.setItem('oi_city', id);
-      renderCities(search.value);
-      const cityObj = CITIES.find(c=>c.id===id);
-      showToast('Вы выбрали: ' + (cityObj?cityObj.name:id));
-    }
-
-    function sendToBot(){
-      if(!selected){
-        showToast('Сначала выберите город');
-        return;
-      }
-      const cityObj = CITIES.find(c=>c.id===selected);
-      const payload = JSON.stringify({ action: 'city_selected', city: selected, name: cityObj?.name || selected });
-      if(tg && tg.sendData){
-        try {
-          tg.sendData(payload);
-          showToast('Город отправлен боту: ' + (cityObj?.name || selected));
-        } catch(e){
-          console.error(e);
-          showToast('Ошибка при отправке боту');
-        }
-      } else {
-        // fallback: просто показать
-        showToast('Данные готовы (локально): ' + (cityObj?.name || selected));
-        console.log('Payload to bot:', payload);
-      }
-    }
-
-    // UI handlers
-    openBtn.addEventListener('click', ()=>{
-      startCard.style.display = 'none';
-      selectCard.style.display = 'block';
-      renderCities();
-      if(tg && tg.MainButton) tg.MainButton.hide && tg.MainButton.hide();
-    });
-
-    search.addEventListener('input', (e)=> renderCities(e.target.value));
-    sendBtn.addEventListener('click', sendToBot);
-    saveBtn.addEventListener('click', ()=>{
-      if(!selected) return showToast('Выберите город прежде чем сохранить');
-      showToast('Сохранено в браузере');
-    });
-    clearBtn.addEventListener('click', ()=>{
-      search.value = '';
-      renderCities('');
-    });
-
-    // Инициализация
-    renderCities();
-
-    // Если уже был выбор — сразу открыть
-    if(selected){
-      // показываем карточки и подсвечиваем
-      startCard.style.display = 'none';
-      selectCard.style.display = 'block';
-      renderCities();
-    }
-
-    // Accessibility: Enter on search triggers filter (already handled)
-    // End of script
-  </script>
-</body>
-</html>
-<!-- BEGIN: Простая регистрация -->
-<div id="regWrapper" style="display:none; padding:40px; text-align:center; max-width:720px; margin:20px auto;">
-  <div id="stepCity" style="display:block;">
-    <h2 style="font-size:28px; margin-bottom:8px;">Регистрация</h2>
-    <p style="color:#666; margin-bottom:18px;">Выбран город: <strong id="selectedCityText"></strong></p>
-    <button id="startRegBtn" style="background:#1d7aff;color:#fff;border:none;padding:10px 18px;border-radius:10px;cursor:pointer;">Продолжить</button>
-  </div>
-
-  <div id="stepForm" style="display:none; text-align:left; margin-top:20px;">
-    <label style="display:block; margin-bottom:8px;">Имя
-      <input id="inpName" type="text" placeholder="Ваше имя" style="width:100%; padding:10px; margin-top:6px; border-radius:8px; border:1px solid #e3e7ee;">
-    </label>
-
-    <label style="display:block; margin-top:12px;">Возраст
-      <input id="inpAge" type="number" min="8" max="120" placeholder="Напр. 28" style="width:150px; padding:10px; margin-top:6px; border-radius:8px; border:1px solid #e3e7ee;">
-    </label>
-
-    <div style="margin-top:18px;">
-      <div style="font-weight:600; margin-bottom:8px;">Выберите хобби (можно несколько)</div>
-
-      <div id="categories" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;"></div>
-
-      <div id="hobbyCards" style="display:flex;flex-wrap:wrap;gap:10px;"></div>
-    </div>
-
-    <div style="display:flex; gap:10px; margin-top:18px; justify-content:flex-end;">
-      <button id="backBtn" style="background:#fff;color:#1d7aff;border:1px solid #1d7aff;padding:10px 14px;border-radius:10px;cursor:pointer;">Назад</button>
-      <button id="submitRegBtn" style="background:#1d7aff;color:#fff;border:none;padding:10px 14px;border-radius:10px;cursor:pointer;">Зарегистрироваться</button>
-    </div>
-  </div>
-
-  <div id="regResult" style="display:none; margin-top:18px;">
-    <p id="regMsg" style="color:#333;"></p>
-    <button id="closeRegBtn" style="background:#fff;color:#1d7aff;border:1px solid #1d7aff;padding:8px 12px;border-radius:8px;cursor:pointer;">Закрыть</button>
-  </div>
-</div>
 
 <script>
 (function(){
+  // ---------- данные городов ----------
+  const CITIES = [
+    {id:'bishkek', title:'Бишкек', flag:'🇰🇬'},
+    {id:'almaty', title:'Алматы', flag:'🇰🇿'},
+    {id:'astana', title:'Астана', flag:'🇰🇿'},
+    {id:'moscow', title:'Москва', flag:'🇷🇺'},
+    {id:'tashkent', title:'Ташкент', flag:'🇺🇿'}
+  ];
 
-// Большой расширенный список хобби
-const HOBBIES = {
+  // ---------- расширенный список хобби ----------
+  const HOBBIES = {
     "Спорт": [
-        "Футбол","Плавание","Баскетбол","Настольный теннис","Волейбол",
-        "Бег","Бокс","ММА","Тхэквондо","Кроссфит","Велосипед"
+      "Футбол","Плавание","Баскетбол","Настольный теннис","Волейбол",
+      "Бег","Бокс","Кроссфит","Велосипед"
     ],
     "Искусство": [
-        "Музыка","Танцы","Рисование","Фотография","Видеосъёмка",
-        "Пение","Граффити","Актерское мастерство"
+      "Музыка","Танцы","Рисование","Фотография","Пение","Театр"
     ],
     "Технологии": [
-        "Кодинг","AI/ChatGPT","Робототехника","3D-моделирование","Игры/геймдев"
+      "Кодинг","AI/ChatGPT","Робототехника","3D-моделирование","Геймдев"
     ],
-    "Общение и отдых": [
-        "Кофе-встречи","Путешествия","Настолки","Книги","Языковые клубы"
+    "Общение": [
+      "Кофе-встречи","Путешествия","Настолки","Книги","Языковой клуб"
     ]
-};
+  };
 
-const categoryContainer = document.getElementById("hobbyCategories");
-const hobbyContainer = document.getElementById("hobbyList");
-
-let selectedCategory = null;
-let selectedHobbies = new Set();
-
-// Отрисовать категории
-function renderCategories() {
-    categoryContainer.innerHTML = "";
-    Object.keys(HOBBIES).forEach(cat => {
-        const btn = document.createElement("button");
-        btn.className = "cat-btn";
-        btn.textContent = cat;
-        btn.onclick = () => {
-            selectedCategory = cat;
-            document.querySelectorAll('.cat-btn')
-                .forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            renderHobbies(cat);
-        };
-        categoryContainer.appendChild(btn);
-    });
-}
-
-// Отрисовать хобби
-function renderHobbies(cat) {
-    hobbyContainer.innerHTML = "";
-    HOBBIES[cat].forEach(hobby => {
-        const div = document.createElement("div");
-        div.className = "hobby-item";
-        div.textContent = hobby;
-
-        if (selectedHobbies.has(hobby))
-            div.classList.add("selected");
-
-        div.onclick = () => {
-            if (selectedHobbies.has(hobby))
-                selectedHobbies.delete(hobby);
-            else
-                selectedHobbies.add(hobby);
-
-            renderHobbies(cat);
-        };
-
-        hobbyContainer.appendChild(div);
-    });
-}
-
-renderCategories();
-
-})();
-</script>
-
-  const wrapper = document.getElementById('regWrapper');
-  const selectedCityText = document.getElementById('selectedCityText');
-  const startRegBtn = document.getElementById('startRegBtn');
-  const stepCity = document.getElementById('stepCity');
+  // элементы
+  const cityGrid = document.getElementById('cityGrid');
+  const citySearch = document.getElementById('citySearch');
+  const sendBot = document.getElementById('sendBot');
+  const saveLocal = document.getElementById('saveLocal');
   const stepForm = document.getElementById('stepForm');
-  const hobbyCards = document.getElementById('hobbyCards');
-  const categories = document.getElementById('categories');
   const inpName = document.getElementById('inpName');
   const inpAge = document.getElementById('inpAge');
-  const submitRegBtn = document.getElementById('submitRegBtn');
+  const hobbyCategories = document.getElementById('hobbyCategories');
+  const hobbyList = document.getElementById('hobbyList');
   const backBtn = document.getElementById('backBtn');
+  const submitRegBtn = document.getElementById('submitRegBtn');
   const regResult = document.getElementById('regResult');
-  const regMsg = document.getElementById('regMsg');
-  const closeRegBtn = document.getElementById('closeRegBtn');
 
-  function getSelectedCity() {
-    return window.selectedCity || localStorage.getItem('oi_city') || null;
-  }
+  let selectedCity = null;
+  let selectedCategory = null;
+  let selectedHobbies = new Set();
 
-  function showWrapperIfCity() {
-    const city = getSelectedCity();
-    if (!city) return;
-    wrapper.style.display = 'block';
-    selectedCityText.innerText = city;
-  }
-
-  function renderCategories() {
-    categories.innerHTML = '';
-    Object.keys(HOBBY_CATEGORIES).forEach((cat, idx) => {
-      const btn = document.createElement('button');
-      btn.innerText = cat;
-      btn.style = 'padding:8px 12px;border-radius:8px;border:1px solid #e6eefb;background:#fff;cursor:pointer;';
-      btn.dataset.cat = cat;
-      btn.onclick = () => {
-        Array.from(categories.children).forEach(c=>c.style.borderColor='#e6eefb');
-        btn.style.borderColor = '#1d7aff';
-        renderHobbies(cat);
+  // отрисовка городов
+  function renderCities(filter=''){
+    cityGrid.innerHTML = '';
+    const f = filter.trim().toLowerCase();
+    CITIES.filter(c=>c.title.toLowerCase().includes(f)).forEach(c=>{
+      const el = document.createElement('div');
+      el.className = 'city';
+      el.innerHTML = `<span style="font-size:20px">${c.flag}</span><span>${c.title}</span>`;
+      el.onclick = ()=>{
+        document.querySelectorAll('.city').forEach(x=>x.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedCity = c;
       };
-      categories.appendChild(btn);
-      if (idx === 0) btn.click();
+      cityGrid.appendChild(el);
+    });
+  }
+  citySearch.addEventListener('input',()=>renderCities(citySearch.value));
+
+  // отрисовать категории хобби
+  function renderCategories(){
+    hobbyCategories.innerHTML = '';
+    Object.keys(HOBBIES).forEach(cat=>{
+      const b = document.createElement('button');
+      b.className = 'cat-btn';
+      b.textContent = cat;
+      b.onclick = ()=>{
+        document.querySelectorAll('.cat-btn').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        selectedCategory = cat;
+        renderHobbyItems(cat);
+      };
+      hobbyCategories.appendChild(b);
     });
   }
 
-  function renderHobbies(category) {
-    hobbyCards.innerHTML = '';
-    (HOBBY_CATEGORIES[category]||[]).forEach(h => {
-      const card = document.createElement('div');
-      card.className = 'hobbyCard';
-      card.dataset.id = h.id;
-      card.style = 'border:1px solid #ecf0f6;padding:10px 14px;border-radius:10px;cursor:pointer;min-width:140px;text-align:center;background:#fff';
-      card.innerText = h.title;
-      card.onclick = () => {
-        card.classList.toggle('sel');
-        if (card.classList.contains('sel')) {
-          card.style.background = '#eaf3ff';
-          card.style.borderColor = '#1d7aff';
-        } else {
-          card.style.background = '#fff';
-          card.style.borderColor = '#ecf0f6';
-        }
+  // список хобби по категории
+  function renderHobbyItems(cat){
+    hobbyList.innerHTML = '';
+    HOBBIES[cat].forEach(h=>{
+      const d = document.createElement('div');
+      d.className = 'hobby-item' + (selectedHobbies.has(h) ? ' selected' : '');
+      d.textContent = h;
+      d.onclick = ()=>{
+        if(selectedHobbies.has(h)) selectedHobbies.delete(h);
+        else selectedHobbies.add(h);
+        renderHobbyItems(cat);
       };
-      hobbyCards.appendChild(card);
+      hobbyList.appendChild(d);
     });
   }
 
-  function getSelectedHobbies() {
-    return Array.from(hobbyCards.querySelectorAll('.sel')).map(el => el.dataset.id);
-  }
-
-  startRegBtn.onclick = () => {
-    stepCity.style.display = 'none';
+  // переключаемся к форме регистрации (после выбора города)
+  sendBot.addEventListener('click', ()=>{
+    if(!selectedCity){ alert('Выберите город'); return; }
+    // показываем форму
     stepForm.style.display = 'block';
-  };
+    // скрывать можно — но у нас делаем пока inline
+    renderCategories();
+  });
 
-  backBtn.onclick = () => {
-    stepCity.style.display = 'block';
+  saveLocal.addEventListener('click', ()=>{
+    if(!selectedCity){ alert('Выберите город'); return; }
+    localStorage.setItem('oi_city', JSON.stringify(selectedCity));
+    alert('Город сохранён локально: ' + selectedCity.title);
+  });
+
+  backBtn.addEventListener('click', ()=>{
     stepForm.style.display = 'none';
-  };
+  });
 
-  submitRegBtn.onclick = () => {
+  submitRegBtn.addEventListener('click', ()=>{
     const name = inpName.value.trim();
-    const age = parseInt(inpAge.value,10);
-    const city = getSelectedCity();
-    const hobbies = getSelectedHobbies();
-
-    if (!name) return alert('Введите имя');
-    if (!age || age < 8) return alert('Введите корректный возраст');
-    if (!hobbies.length) return alert('Выберите хотя бы одно хобби');
+    const age = inpAge.value.trim();
+    if(!name || !age){ alert('Введите имя и возраст'); return; }
+    if(selectedHobbies.size === 0){ if(!confirm('Вы не выбрали хобби. Продолжить?')) return; }
 
     const payload = {
-      action: 'save_profile',
-      city, 
-      name,
-      age,
-      hobbies,
-      ts: Date.now()
+      city: selectedCity,
+      name, age,
+      hobbies: Array.from(selectedHobbies)
     };
 
-    if (window.Telegram && Telegram.WebApp && Telegram.WebApp.sendData) {
-      Telegram.WebApp.sendData(JSON.stringify(payload));
-      regMsg.innerText = 'Готово — данные отправлены боту.';
-    } else {
-      localStorage.setItem('oi_profile', JSON.stringify(payload));
-      regMsg.innerText = 'WebApp недоступен — данные сохранены локально.';
-    }
+    // Сохраняем локально
+    localStorage.setItem('oi_user', JSON.stringify(payload));
+    regResult.innerText = 'Регистрация успешна — данные сохранены локально.';
+    regResult.style.color = '#0a7a0a';
 
-    stepForm.style.display = 'none';
-    regResult.style.display = 'block';
-  };
-
-  closeRegBtn.onclick = () => {
-    wrapper.style.display = 'none';
-    regResult.style.display = 'none';
-  };
-
-  renderCategories();
-  showWrapperIfCity();
-
-  window.oi_showRegistration = function(cityName) {
-    if (cityName) {
-      window.selectedCity = cityName;
-      localStorage.setItem('oi_city', cityName);
-    }
-    selectedCityText.innerText = getSelectedCity();
-    wrapper.style.display = 'block';
-    stepCity.style.display = 'block';
-    stepForm.style.display = 'none';
-    regResult.style.display = 'none';
-  };
-})();
-</script><!-- ВСТАВЬТЕ ЭТО ПРЯМО В index.html перед </script> -->
-<script>
-// --- helper: показываем форму регистрации для выбранного города ---
-function oi_showRegistration(selectedCity) {
-  // если модаль уже есть, откроем и обновим город
-  let existing = document.getElementById('oi-registration-modal');
-  if (!existing) {
-    // создаём модаль
-    const modal = document.createElement('div');
-    modal.id = 'oi-registration-modal';
-    Object.assign(modal.style, {
-      position: 'fixed', left:0, top:0, right:0, bottom:0,
-      display:'flex', alignItems:'center', justifyContent:'center',
-      background:'rgba(0,0,0,0.3)', zIndex: 9999,
-      padding: '20px',
-    });
-
-    modal.innerHTML = `
-      <div style="width:100%;max-width:520px;background:#fff;border-radius:12px;padding:28px;box-shadow:0 8px 30px rgba(0,0,0,.12);font-family:Arial,Helvetica,sans-serif;">
-        <h2 style="margin:0 0 8px;font-size:28px;text-align:center">Регистрация</h2>
-        <p style="margin:0 0 16px;text-align:center;color:#6b7280">Вы выбрали город: <b id="oi-city-name"></b></p>
-
-        <div style="display:flex;gap:8px;margin-bottom:12px;">
-          <input id="oi-name" placeholder="Имя" style="flex:1;padding:12px;border-radius:8px;border:1px solid #e6e6e6;" />
-          <input id="oi-age" placeholder="Возраст" type="number" style="width:110px;padding:12px;border-radius:8px;border:1px solid #e6e6e6;" />
-        </div>
-
-        <div style="margin-bottom:10px;">
-          <label style="display:block;margin-bottom:6px;color:#374151">Увлечение (выберите одно или несколько)</label>
-
-          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:8px;">
-            <button class="oi-hobby-chip" data-hobby="Футбол" style="padding:10px;border-radius:10px;border:1px solid #e6e6e6;background:#fff;cursor:pointer">⚽ Футбол</button>
-            <button class="oi-hobby-chip" data-hobby="Плавание" style="padding:10px;border-radius:10px;border:1px solid #e6e6e6;background:#fff;cursor:pointer">🏊 Плавание</button>
-            <button class="oi-hobby-chip" data-hobby="Настольный теннис" style="padding:10px;border-radius:10px;border:1px solid #e6e6e6;background:#fff;cursor:pointer">🏓 Наст. теннис</button>
-            <button class="oi-hobby-chip" data-hobby="Баскетбол" style="padding:10px;border-radius:10px;border:1px solid #e6e6e6;background:#fff;cursor:pointer">🏀 Баскетбол</button>
-            <button class="oi-hobby-chip" data-hobby="Волейбол" style="padding:10px;border-radius:10px;border:1px solid #e6e6e6;background:#fff;cursor:pointer">🏐 Волейбол</button>
-            <button class="oi-hobby-chip" data-hobby="Музыка" style="padding:10px;border-radius:10px;border:1px solid #e6e6e6;background:#fff;cursor:pointer">🎵 Музыка</button>
-            <button class="oi-hobby-chip" data-hobby="Танцы" style="padding:10px;border-radius:10px;border:1px solid #e6e6e6;background:#fff;cursor:pointer">💃 Танцы</button>
-            <button class="oi-hobby-chip" data-hobby="Другое" style="padding:10px;border-radius:10px;border:1px solid #e6e6e6;background:#fff;cursor:pointer">✨ Другое</button>
-          </div>
-        </div>
-
-        <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
-          <button id="oi-send-bot" style="background:#1d7aff;color:#fff;padding:12px 18px;border-radius:10px;border:none;cursor:pointer">Отправить боту</button>
-          <button id="oi-save-local" style="background:#fff;color:#111;padding:12px 18px;border-radius:10px;border:1px solid #e6e6e6;cursor:pointer">Сохранить локально</button>
-          <button id="oi-close" style="background:transparent;color:#6b7280;padding:12px 10px;border-radius:10px;border:none;cursor:pointer">Закрыть</button>
-        </div>
-        <p id="oi-status" style="text-align:center;color:#6b7280;margin-top:12px;font-size:13px"></p>
-      </div>
-    `;
-    document.body.appendChild(modal);
-
-    // привязки
-    document.getElementById('oi-close').onclick = () => modal.remove();
-    document.getElementById('oi-save-local').onclick = () => {
-      const data = collectOiForm();
-      localStorage.setItem('oi-reg-'+(data.city||'?'), JSON.stringify(data));
-      showOiStatus('Сохранено локально ✔️');
-    };
-    document.getElementById('oi-send-bot').onclick = () => {
-      const data = collectOiForm();
-      // если Telegram.WebApp доступен — отправляем в бот
-      if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.sendData === 'function') {
-        try {
-          window.Telegram.WebApp.sendData(JSON.stringify({type:'registration', payload:data}));
-          showOiStatus('Отправлено боту ✔️');
-        } catch (err) {
-          console.error(err);
-          showOiStatus('Ошибка отправки боту');
-        }
-      } else if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.onEvent === 'function') {
-        // fallback: если старый метод - используем sendData по имени
-        try {
-          window.Telegram.WebApp.sendData(JSON.stringify({type:'registration', payload:data}));
-          showOiStatus('Отправлено боту ✔️');
-        } catch(e){
-          console.log(e);
-          showOiStatus('Нельзя отправить: WebApp не доступен');
-        }
-      } else {
-        // не в телеге — просто логим или сохраняем
-        console.log('Registration payload:', data);
-        showOiStatus('WebApp не найден — данные в консоли');
+    // Попытка отправить в Telegram WebApp (если открыт внутри Telegram)
+    try {
+      if(window.Telegram && Telegram.WebApp){
+        const tg = Telegram.WebApp;
+        tg.expand();
+        // отправляем данные боту (можно заменить на нужный метод)
+        tg.sendData(JSON.stringify(payload));
       }
-    };
-
-    // переключатель чипов
-    modal.querySelectorAll('.oi-hobby-chip').forEach(chip=>{
-      chip.onclick = () => {
-        chip.classList.toggle('oi-selected');
-        chip.style.background = chip.classList.contains('oi-selected') ? '#1d7aff' : '#fff';
-        chip.style.color = chip.classList.contains('oi-selected') ? '#fff' : '#111';
-      };
-    });
-
-    // collect + helpers
-    function collectOiForm(){
-      const name = document.getElementById('oi-name').value.trim();
-      const age = document.getElementById('oi-age').value;
-      const hobbies = Array.from(modal.querySelectorAll('.oi-hobby-chip.oi-selected')).map(n=>n.dataset.hobby);
-      const city = modal.querySelector('#oi-city-name').innerText;
-      return {city, name, age, hobbies, ts: new Date().toISOString()};
+    } catch(e){
+      console.warn('tg send fail', e);
     }
-    function showOiStatus(txt){
-      const s = modal.querySelector('#oi-status');
-      s.innerText = txt;
-      setTimeout(()=>{ s.innerText = ''; }, 3000);
-    }
-  } // end create modal
-
-  // обновляем выбранный город в модали и показываем
-  const modalNow = document.getElementById('oi-registration-modal');
-  if (modalNow) {
-    modalNow.querySelector('#oi-city-name').innerText = selectedCity || '—';
-    modalNow.style.display = 'flex';
-  }
-}
-
-// --- автоматическое привязывание к карточкам городов ---
-// Если в разметке у карточек стоит класс .city-card, код сам повесит обработчик.
-// Убедитесь, что в HTML у каждой карточки есть атрибут data-city, например:
-// <div class="city-card" data-city="Бишкек">Бишкек</div>
-function oi_bindCityClicks() {
-  const cards = document.querySelectorAll('.city-card');
-  if (cards.length === 0) {
-    // если разметка другая — можно поймать по тексту внутри карточек (backup)
-    const possible = Array.from(document.querySelectorAll('button,div')).filter(el=>{
-      const txt = (el.innerText||'').trim();
-      return ['Бишкек','Алматы','Астана','Москва','Ташкент'].includes(txt);
-    });
-    possible.forEach(el=>{
-      el.classList.add('city-card'); // пометим
-    });
-  }
-
-  document.querySelectorAll('.city-card').forEach(card=>{
-    // если data-city не задан — берем текст
-    const cityName = card.dataset.city || (card.innerText || '').trim();
-    // визуальный фокус при выборе
-    card.style.cursor = 'pointer';
-    card.addEventListener('click', () => {
-      // снять выделение у всех
-      document.querySelectorAll('.city-card').forEach(c=>c.style.boxShadow='none');
-      // выделить текущую
-      card.style.boxShadow = '0 0 0 4px rgba(29,122,255,0.12)';
-      // вызвать форму регистрации
-      oi_showRegistration(cityName);
-    });
   });
-}
 
-// запускаем привязку после загрузки DOM
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', oi_bindCityClicks);
-} else {
-  oi_bindCityClicks();
-}
+  // Init
+  renderCities();
+  renderCategories();
+
+})();
 </script>
-<!-- END: Простая регистрация -->
+
+</body>
+</html>
